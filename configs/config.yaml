@@ -1,0 +1,76 @@
+# 예시 설정 파일 — 실제 값은 데이터 확인 후 수정
+project:
+  name: cannon_deeplearning
+  seed: 42
+  device: cpu                  # GPU 미지원 환경
+
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  results_dir: results
+  reports_dir: reports
+  labels_csv: data/raw/labels.csv   # 컬럼: image_id, machine_type, step, label(PASS/FAIL)
+
+data:
+  image_size: [256, 256]       # [H, W] 리사이즈 크기
+  extensions: [".png", ".jpg", ".jpeg", ".bmp"]
+  train_normal_only: true      # 학습은 PASS(정상) 이미지로만
+  val_ratio: 0.2
+  augment: false
+
+features:
+  type: handcrafted            # handcrafted | cnn_embedding
+  cnn_backbone: null           # cnn_embedding일 때만 사용 (경량 백본, CPU)
+  patch_size: 32
+  stride: 16
+
+model:
+  type: gaussian               # gaussian | patch_knn | autoencoder
+  params:
+    knn_k: 3                   # patch_knn
+    coreset_ratio: 0.1         # patch_knn: 메모리뱅크 서브샘플 비율
+    reg_eps: 1.0e-3            # gaussian: 공분산 정규화
+
+scoring:
+  patch_aggregation: max       # max | mean | topk_mean
+  topk: 10
+  normalize: minmax            # none | minmax | zscore (스텝별 학습 정상 분포 기준)
+
+threshold:
+  method: percentile           # percentile | mean_std | fail_calibrated
+  percentile: 99.0             # 정상 검증 스코어의 상위 분위
+  k_std: 3.0                   # mean_std: mean + k * std
+  # threshold를 스텝별 직접 지정하면(machine_types.*.steps[].threshold) 위 method보다 우선
+
+decision:
+  step_fail_rule: score_gt_threshold   # score > threshold 이면 FAIL
+  product_rule: all_steps_pass         # 15개 스텝 모두 PASS여야 제품 PASS
+
+# 기종별 스텝 정의 — roi: [x, y, w, h] (원본 이미지 좌표), threshold: null이면 학습 후 자동 산출
+machine_types:
+  MODEL_A:
+    image_glob: "MODEL_A/*.png"
+    steps:
+      - {id: 1,  name: step_01, roi: [0, 0, 256, 256], threshold: null}
+      - {id: 2,  name: step_02, roi: [0, 0, 256, 256], threshold: null}
+      - {id: 3,  name: step_03, roi: [0, 0, 256, 256], threshold: null}
+      - {id: 4,  name: step_04, roi: [0, 0, 256, 256], threshold: null}
+      - {id: 5,  name: step_05, roi: [0, 0, 256, 256], threshold: null}
+      - {id: 6,  name: step_06, roi: [0, 0, 256, 256], threshold: null}
+      - {id: 7,  name: step_07, roi: [0, 0, 256, 256], threshold: null}
+      - {id: 8,  name: step_08, roi: [0, 0, 256, 256], threshold: null}
+      - {id: 9,  name: step_09, roi: [0, 0, 256, 256], threshold: null}
+      - {id: 10, name: step_10, roi: [0, 0, 256, 256], threshold: null}
+      - {id: 11, name: step_11, roi: [0, 0, 256, 256], threshold: null}
+      - {id: 12, name: step_12, roi: [0, 0, 256, 256], threshold: null}
+      - {id: 13, name: step_13, roi: [0, 0, 256, 256], threshold: null}
+      - {id: 14, name: step_14, roi: [0, 0, 256, 256], threshold: null}
+      - {id: 15, name: step_15, roi: [0, 0, 256, 256], threshold: null}
+  # MODEL_B:
+  #   image_glob: "MODEL_B/*.png"
+  #   steps: [...]
+
+eval:
+  metrics: [auroc, aupr, f1, precision, recall]
+  save_score_csv: true
+  save_heatmaps: true
