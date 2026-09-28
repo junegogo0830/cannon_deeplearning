@@ -9,5 +9,10 @@ matplotlib
 pyyaml
 torch  # CPU 빌드 (위 extra-index-url 사용)
 
+# EDA / 노트북용
+jupyter
+nbformat
+openpyxl        # xlsx 메타데이터(T595NP_층별일람표) 읽기용
+
 # 사전학습 CNN을 특징 추출기로 쓸 경우에만 추가 (판정 로직은 직접 구성)
 # torchvision

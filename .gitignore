@@ -24,11 +24,15 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# --- 데이터 (폴더 구조만 유지, 내용물은 제외) ---
+# --- 데이터 (폴더 구조만 유지, 원본/대용량 내용물은 제외) ---
 data/raw/*
 data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+# EDA 요약 표(용량 작은 CSV)는 보고서 근거자료로 버전관리에 포함
+!data/processed/eda/
+data/processed/eda/*
+!data/processed/eda/*.csv
 
 # --- 결과물 (폴더 구조만 유지) ---
 results/*
