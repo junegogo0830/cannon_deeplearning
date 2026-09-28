@@ -1,31 +1,31 @@
-"""학습/검증/테스트 분할.
+"""학습/검증 분할.
 
-FAIL 이 극히 적으므로 학습에는 PASS 만 사용하고,
-FAIL 은 검증·테스트(임계값 보정 및 평가)에만 배치하는 것이 기본 전략이다.
+FAIL 이 극히 적으므로 학습에는 PASS 만 사용한다 (get_step_paths가 이미 PASS/FAIL을 분리해 줌).
+여기서는 PASS 경로 목록을 train/val로만 나눈다.
 """
 from __future__ import annotations
 
-import pandas as pd
+import random
+from pathlib import Path
 
 
-def split_normal_only_train(
-    df: pd.DataFrame, val_ratio: float, seed: int
-) -> dict[str, pd.DataFrame]:
-    """PASS → train/val 로 분할하고, FAIL 은 val/test 로 배치한다.
+def split_pass_paths(
+    pass_paths: list[Path], val_ratio: float, seed: int
+) -> tuple[list[Path], list[Path]]:
+    """PASS 경로 목록을 (train, val) 로 섞어서 나눈다.
 
-    Args:
-        df: load_labels 결과 (특정 기종·스텝으로 필터된 상태).
-        val_ratio: PASS 중 검증에 쓸 비율.
-        seed: 난수 시드.
-
-    Returns:
-        {"train": ..., "val": ..., "test": ...}
+    제품 수가 극소(2~9개)인 기종은 val이 0이 될 수 있다 — 이 경우 threshold는
+    train 스코어 자체로 산출하게 되므로 신뢰도가 낮음을 결과에 표시해야 한다.
     """
-    # TODO: FAIL 이 너무 적을 때 val/test 배분 정책 (예: leave-one-out, k-fold)
-    raise NotImplementedError
+    paths = list(pass_paths)
+    rng = random.Random(seed)
+    rng.shuffle(paths)
 
+    if len(paths) <= 1:
+        return paths, []
 
-def kfold_splits(df: pd.DataFrame, n_splits: int, seed: int) -> list[dict[str, pd.DataFrame]]:
-    """FAIL 이 극소수일 때를 위한 stratified k-fold 분할 목록."""
-    # TODO: sklearn StratifiedKFold
-    raise NotImplementedError
+    n_val = int(round(len(paths) * val_ratio))
+    n_val = min(max(n_val, 0), len(paths) - 1)  # 최소 1개는 train에 남긴다
+    val = paths[:n_val]
+    train = paths[n_val:]
+    return train, val

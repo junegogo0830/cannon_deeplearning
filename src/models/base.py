@@ -5,8 +5,10 @@ PASS/FAIL 이진 판정은 모델이 아니라 scoring/ 의 threshold 로직이 
 """
 from __future__ import annotations
 
+import pickle
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -16,37 +18,35 @@ class AnomalyModel(ABC):
 
     @abstractmethod
     def fit(self, features: np.ndarray) -> "AnomalyModel":
-        """정상 데이터의 특징으로 학습한다.
-
-        Args:
-            features: (N, D) 또는 (N, P, D) — 이미지 단위/패치 단위.
-        """
-        # TODO
+        """정상 데이터의 특징으로 학습한다. features: (N, D) — 패치 모델은 전체 패치 풀을 펼쳐서 전달."""
         raise NotImplementedError
 
     @abstractmethod
     def score(self, features: np.ndarray) -> np.ndarray:
-        """이상 스코어를 반환한다 (클수록 이상).
-
-        Returns:
-            (N,) 이미지 스코어 또는 (N, P) 패치 스코어.
-        """
-        # TODO
+        """이상 스코어를 반환한다 (클수록 이상). (N, D) → (N,), 패치 모델은 (N, P, D) → (N, P) 도 지원."""
         raise NotImplementedError
 
     def save(self, path: str | Path) -> None:
-        """학습된 파라미터를 저장한다."""
-        # TODO
-        raise NotImplementedError
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "wb") as f:
+            pickle.dump(self, f)
 
     @classmethod
     def load(cls, path: str | Path) -> "AnomalyModel":
-        """저장된 모델을 로드한다."""
-        # TODO
-        raise NotImplementedError
+        with open(path, "rb") as f:
+            return pickle.load(f)
 
 
-def build_model(model_cfg: dict) -> AnomalyModel:
-    """config.model.type 에 맞는 모델 인스턴스를 만든다 (gaussian | patch_knn | autoencoder)."""
-    # TODO: 레지스트리/딕셔너리 매핑
-    raise NotImplementedError
+def build_model(model_cfg: dict[str, Any]) -> AnomalyModel:
+    """config.model 에 맞는 모델 인스턴스를 만든다 (gaussian | patch_knn)."""
+    from src.models.gaussian import GaussianModel
+    from src.models.patch_knn import PatchKNNModel
+
+    model_type = model_cfg["type"]
+    params = model_cfg.get("params", {})
+    if model_type == "gaussian":
+        return GaussianModel(reg_eps=params.get("reg_eps", 1e-3))
+    if model_type == "patch_knn":
+        return PatchKNNModel(k=params.get("knn_k", 3), coreset_ratio=params.get("coreset_ratio", 0.1))
+    raise ValueError(f"알 수 없는 model.type: {model_type} (사용 가능: gaussian, patch_knn)")

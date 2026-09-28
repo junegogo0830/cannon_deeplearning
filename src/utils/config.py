@@ -4,27 +4,27 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 
 def load_config(path: str | Path) -> dict[str, Any]:
-    """YAML 설정 파일을 읽어 dict로 반환한다.
-
-    Args:
-        path: config.yaml 경로.
-
-    Returns:
-        설정 dict.
-    """
-    # TODO: yaml.safe_load 로 읽기, 파일 없을 때 명확한 에러
-    raise NotImplementedError
+    """YAML 설정 파일을 읽어 dict로 반환한다."""
+    path = Path(path)
+    if not path.is_file():
+        raise FileNotFoundError(f"config 파일을 찾을 수 없습니다: {path}")
+    with open(path, encoding="utf-8") as f:
+        return yaml.safe_load(f)
 
 
-def get_step_config(cfg: dict[str, Any], machine_type: str, step_id: int) -> dict[str, Any]:
-    """특정 기종·스텝의 설정(roi, threshold 등)을 반환한다.
+def get_machine_config(cfg: dict[str, Any], machine_type: str) -> dict[str, Any]:
+    """config.machine_types[machine_type] (n_steps, image_glob, has_real_fail)."""
+    try:
+        return cfg["machine_types"][machine_type]
+    except KeyError as e:
+        raise KeyError(f"config.machine_types 에 '{machine_type}' 기종이 없습니다.") from e
 
-    Args:
-        cfg: load_config 결과.
-        machine_type: 기종 이름 (예: "MODEL_A").
-        step_id: 스텝 번호 (1~15).
-    """
-    # TODO: cfg["machine_types"][machine_type]["steps"] 에서 id 매칭
-    raise NotImplementedError
+
+def get_step_ids(cfg: dict[str, Any], machine_type: str) -> list[int]:
+    """0-indexed 스텝 id 목록 (n_steps 만큼, step_0.jpg ~ step_{n-1}.jpg 에 대응)."""
+    n_steps = get_machine_config(cfg, machine_type)["n_steps"]
+    return list(range(n_steps))
