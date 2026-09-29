@@ -21,7 +21,7 @@ import numpy as np
 
 from src.data.dataset import get_step_paths, read_image
 from src.data.preprocess import align_to_reference, preprocess
-from src.data.split import split_pass_paths
+from src.data.split import reserve_val_then_train
 from src.features.patches import extract_patches, patch_features
 from src.models.base import AnomalyModel, build_model
 from src.scoring.anomaly_score import aggregate_patch_scores, combine_scales
@@ -106,10 +106,18 @@ def train_step(
     step: int,
     run_dir: Path,
     max_train: int | None = None,
+    min_val: int = 150,
     logger=None,
     backbone: Any = None,
 ) -> dict[str, Any]:
-    """(기종, 스텝) 하나를 학습하고 결과(모델·threshold·메타데이터)를 run_dir 에 저장한다."""
+    """(기종, 스텝) 하나를 학습하고 결과(모델·threshold·메타데이터)를 run_dir 에 저장한다.
+
+    Args:
+        max_train: 뱅크(patch_knn 메모리뱅크) 학습에 쓸 이미지 수 상한 (속도용).
+        min_val: threshold 산출용 val 최소 확보 개수. max_train과 별개로 확보된다
+            (실측 결과 val이 작으면 percentile threshold가 진짜 정상 분포의 꼬리를
+            전혀 대변 못 하는 것을 확인함 — reports/eda_summary.md 이후 대화 참고).
+    """
     roi = None  # 아직 미지정 (config.machine_types 참고 — 전체 프레임 사용)
     size = tuple(cfg["data"]["image_size"])
     align_cfg = cfg["alignment"]
@@ -122,12 +130,9 @@ def train_step(
     if len(pass_paths) < 2:
         raise ValueError(f"{machine_type} step{step}: PASS 이미지가 너무 적습니다 ({len(pass_paths)}장)")
 
-    if max_train is not None and len(pass_paths) > max_train:
-        rng = np.random.RandomState(seed)
-        idx = sorted(rng.choice(len(pass_paths), size=max_train, replace=False))
-        pass_paths = [pass_paths[i] for i in idx]
-
-    train_paths, val_paths = split_pass_paths(pass_paths, cfg["data"]["val_ratio"], seed)
+    train_paths, val_paths = reserve_val_then_train(
+        pass_paths, cfg["data"]["val_ratio"], min_val, max_train, seed
+    )
     val_is_fallback = len(val_paths) == 0
     if val_is_fallback:
         val_paths = train_paths  # 극소 표본 기종: val 없으면 train으로 대체 (신뢰도 낮음, meta에 표시)

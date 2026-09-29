@@ -23,7 +23,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--machine", required=True, help="기종 이름 (config.machine_types 키)")
     parser.add_argument("--steps", type=int, nargs="*", default=None, help="지정 시 해당 스텝만 (기본: 기종 전체)")
     parser.add_argument("--run", default="dev", help="results/<run>/ 에 저장")
-    parser.add_argument("--max-train", type=int, default=None, help="학습 PASS 이미지 수 상한 (속도용 샘플링)")
+    parser.add_argument("--max-train", type=int, default=None, help="학습(뱅크) PASS 이미지 수 상한 (속도용 샘플링)")
+    parser.add_argument("--min-val", type=int, default=150, help="threshold 산출용 val 최소 확보 개수 (max_train과 별개)")
     return parser.parse_args()
 
 
@@ -39,7 +40,10 @@ def main() -> None:
 
     for step in steps:
         try:
-            train_step(cfg, args.machine, step, run_dir, max_train=args.max_train, logger=logger, backbone=backbone)
+            train_step(
+                cfg, args.machine, step, run_dir,
+                max_train=args.max_train, min_val=args.min_val, logger=logger, backbone=backbone,
+            )
         except ValueError as e:
             logger.warning(str(e))
 

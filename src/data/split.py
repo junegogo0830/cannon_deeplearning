@@ -29,3 +29,34 @@ def split_pass_paths(
     val = paths[:n_val]
     train = paths[n_val:]
     return train, val
+
+
+def reserve_val_then_train(
+    pass_paths: list[Path], val_ratio: float, min_val: int, max_train: int | None, seed: int
+) -> tuple[list[Path], list[Path]]:
+    """threshold 산출용 val을 먼저 넉넉히 확보하고, 남는 것 중 최대 max_train개만 학습(뱅크)에 쓴다.
+
+    percentile(예: 99%) threshold를 val 12장 정도로 잡으면 사실상 "12개 중 제일 큰 값 근처"밖에
+    안 돼서, 훨씬 큰 정상 모집단의 실제 꼬리 분포를 전혀 대변하지 못한다(실측으로 확인됨 —
+    val 기준 threshold가 정상 홀드아웃 p99보다 한참 낮게 나옴). max_train으로 뱅크 크기를
+    줄이더라도 val 크기는 별개로 min_val 이상을 확보해서 threshold 신뢰도를 지킨다.
+
+    Args:
+        min_val: val에 최소 이만큼은 확보한다 (표본이 충분할 때).
+        max_train: 남은 것 중 뱅크에 쓸 상한. None이면 남는 것 전부 사용.
+    """
+    paths = list(pass_paths)
+    rng = random.Random(seed)
+    rng.shuffle(paths)
+
+    if len(paths) <= 2:
+        return paths, []  # 극소 표본 기종: train만, val 없음 (호출부가 폴백 처리)
+
+    val_target = max(min_val, int(round(len(paths) * val_ratio)))
+    val_target = min(val_target, len(paths) - 1)  # 최소 1장은 train에 남긴다
+    val_paths = paths[:val_target]
+    remaining = paths[val_target:]
+
+    if max_train is not None and len(remaining) > max_train:
+        remaining = remaining[:max_train]
+    return remaining, val_paths
