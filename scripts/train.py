@@ -4,9 +4,13 @@
 """
 from __future__ import annotations
 
+# Windows(이 개발 환경)에서 재현되는 DLL 로드 순서 문제 회피용 — cv2/numpy보다 먼저 import 해야 함
+# (src/pipeline.py 상단 주석 참고). 지금은 우연히 순서가 맞지만 명시적으로 고정해 둔다.
+import torch  # noqa: F401,E402
+
 import argparse
 
-from src.pipeline import train_step
+from src.pipeline import build_backbone_if_needed, train_step
 from src.utils.config import get_step_ids, load_config
 from src.utils.io import get_run_dir
 from src.utils.log import get_logger
@@ -31,10 +35,11 @@ def main() -> None:
 
     steps = args.steps if args.steps is not None else get_step_ids(cfg, args.machine)
     run_dir = get_run_dir(cfg["paths"]["results_dir"], args.run)
+    backbone = build_backbone_if_needed(cfg)  # cnn_embedding일 때만 생성, 스텝마다 재사용
 
     for step in steps:
         try:
-            train_step(cfg, args.machine, step, run_dir, max_train=args.max_train, logger=logger)
+            train_step(cfg, args.machine, step, run_dir, max_train=args.max_train, logger=logger, backbone=backbone)
         except ValueError as e:
             logger.warning(str(e))
 

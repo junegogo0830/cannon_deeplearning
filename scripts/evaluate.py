@@ -8,6 +8,11 @@
 """
 from __future__ import annotations
 
+# Windows(이 개발 환경)에서 재현되는 DLL 로드 순서 문제 회피용 — cv2/numpy/matplotlib보다 먼저
+# import 해야 함 (src/pipeline.py 상단 주석 참고). 이 스크립트는 src.pipeline보다 먼저 cv2를
+# 끌어들이는 모듈(src.data.dataset, src.eval.visualize)을 import하므로 여기서도 명시적으로 필요.
+import torch  # noqa: F401,E402
+
 import argparse
 from pathlib import Path
 
@@ -19,7 +24,7 @@ from src.eval.metrics import evaluate_all_steps, evaluate_step
 from src.eval.report import save_metrics_report, save_score_table
 from src.eval.synthetic import generate_synthetic_fail
 from src.eval.visualize import plot_score_distribution
-from src.pipeline import load_step_artifacts, score_image
+from src.pipeline import build_backbone_if_needed, load_step_artifacts, score_image
 from src.utils.config import get_step_ids, load_config
 from src.utils.io import get_run_dir
 from src.utils.log import get_logger
@@ -35,13 +40,15 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _score_row(path: Path, image, artifacts, label: int, kind: str) -> dict:
-    res = score_image(image, artifacts)
+def _score_row(path: Path, image, artifacts, label: int, kind: str, backbone=None) -> dict:
+    res = score_image(image, artifacts, backbone=backbone)
     row = {"path": str(path), "label": label, "kind": kind, "ok": res["ok"]}
     if res["ok"]:
         row["score"] = res["score"]
+        row["aligned"] = res["aligned"]
     else:
         row["score"] = np.nan
+        row["aligned"] = False
         row["align_fail_reason"] = res["reason"]
     return row
 
@@ -52,6 +59,7 @@ def main() -> None:
     logger = get_logger("evaluate")
     steps = args.steps if args.steps is not None else get_step_ids(cfg, args.machine)
     run_dir = get_run_dir(cfg["paths"]["results_dir"], args.run)
+    backbone = build_backbone_if_needed(cfg)  # cnn_embedding일 때만 생성, 스텝마다 재사용
 
     per_step_metrics = {}
 
@@ -69,16 +77,16 @@ def main() -> None:
 
         rows = []
         for p in holdout_paths:
-            rows.append(_score_row(p, read_image(p), artifacts, 0, "pass_holdout"))
+            rows.append(_score_row(p, read_image(p), artifacts, 0, "pass_holdout", backbone))
         for p in fail_paths:
-            rows.append(_score_row(p, read_image(p), artifacts, 1, "real_fail"))
+            rows.append(_score_row(p, read_image(p), artifacts, 1, "real_fail", backbone))
 
         synth_methods = cfg["evaluation"]["synthetic_anomaly"]["methods"]
         synth_src = (holdout_paths or pass_paths)[: args.n_synthetic]
         for i, p in enumerate(synth_src):
             method = synth_methods[i % len(synth_methods)]
             synth_img = generate_synthetic_fail(read_image(p), method, seed=i)
-            rows.append(_score_row(f"{p}::{method}", synth_img, artifacts, 1, f"synthetic_{method}"))
+            rows.append(_score_row(f"{p}::{method}", synth_img, artifacts, 1, f"synthetic_{method}", backbone))
 
         df = pd.DataFrame(rows)
         save_score_table(df, run_dir / args.machine / f"step_{step}" / "eval_scores.csv")
@@ -96,6 +104,7 @@ def main() -> None:
         m["n_real_fail"] = int((df.kind == "real_fail").sum())
         m["n_synthetic"] = int(df.kind.str.startswith("synthetic").sum())
         m["holdout_is_val_fallback"] = used_fallback_holdout
+        m["geo_aligned_rate"] = float(valid["aligned"].mean()) if "aligned" in valid and len(valid) else float("nan")
 
         # 실제 FAIL 사례는 정렬 자체가 실패하는 경우가 잦다(결함이 곧 특징점을 없애버리는 경우, 예:
         # 라벨 누락). scripts/infer.py 와 같은 정책으로 "정렬 실패 = FAIL(재검)"까지 caught로 센다.

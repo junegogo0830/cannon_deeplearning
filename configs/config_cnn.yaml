@@ -1,0 +1,92 @@
+# config.yaml 의 실험 변형 — "①: frozen 사전학습 CNN 특징 추출기 + 정렬 soft-fallback".
+# handcrafted+hard-align(config.yaml) 결과와 같은 기종/스텝/모델/threshold/평가 방식으로
+# 비교하기 위해 features/alignment.on_failure 섹션만 바꿨다. 나머지는 config.yaml과 동일.
+project:
+  name: cannon_deeplearning_cnn
+  seed: 42
+  device: cpu
+
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  results_dir: results
+  reports_dir: reports
+  inventory_csv: data/processed/eda/inventory.csv
+  ng_events_csv: data/processed/eda/ng_events.csv
+
+data:
+  native_size: [768, 1024]
+  image_size: [384, 512]
+  extensions: [".jpg"]
+  train_normal_only: true
+  val_ratio: 0.2
+  augment: false
+
+alignment:
+  method: affine
+  feature: orb
+  ransac_reproj_threshold: 5.0
+  min_inliers: 15
+  min_inlier_ratio: 0.25
+  max_abs_dx_px: 200
+  max_abs_dy_px: 150
+  max_abs_rotation_deg: 20
+  # handcrafted 버전과 유일하게 다른 지점: 정렬 실패해도 제외하지 않고 원본(전처리만 된) 이미지로 진행.
+  # CNN 임베딩이 정렬 없이도 정상/이상을 구분할 만큼 강건한지가 이 실험의 핵심 질문.
+  on_failure: keep_unaligned
+
+features:
+  type: cnn_embedding
+  cnn_backbone: mobilenet_v3_small   # torchvision 사전학습, frozen, ImageNet 가중치
+  # mobilenet_v3_small.features 블록 인덱스. 작을수록 해상도 높은(세밀한) 패치, 클수록 수용영역 넓은(거시적) 패치.
+  # index4: (40ch, 24x32=768패치) / index9: (96ch, 12x16=192패치) — 한 번의 forward로 둘 다 추출.
+  cnn_layers: [4, 9]
+
+model:
+  type: patch_knn
+  params:
+    knn_k: 3
+    coreset_ratio: 0.1
+    reg_eps: 1.0e-3
+
+scoring:
+  patch_aggregation: max
+  topk: 10
+  normalize: minmax
+
+threshold:
+  method: percentile
+  percentile: 99.0
+  k_std: 3.0
+
+decision:
+  step_fail_rule: score_gt_threshold
+  product_rule: all_steps_pass
+
+evaluation:
+  real_fail_available_machines: [3029C003AA, 3029C004AA, 3029C009AA]
+  real_fail_eval_method: leave_one_out
+  synthetic_anomaly:
+    enabled: true
+    methods: [cutout_patch, brightness_drop, patch_copy_shift]
+    n_per_step: 20
+
+machine_types:
+  3029C003AA: {n_steps: 15, image_glob: "3029C003AA/*/step_*.jpg", has_real_fail: true}
+  3029C004AA: {n_steps: 18, image_glob: "3029C004AA/*/step_*.jpg", has_real_fail: true}
+  3029C005AA: {n_steps: 13, image_glob: "3029C005AA/*/step_*.jpg", has_real_fail: false}
+  3029C006AA: {n_steps: 13, image_glob: "3029C006AA/*/step_*.jpg", has_real_fail: false}
+  3029C009AA: {n_steps: 15, image_glob: "3029C009AA/*/step_*.jpg", has_real_fail: true}
+  3029C010AA: {n_steps: 20, image_glob: "3029C010AA/*/step_*.jpg", has_real_fail: false}
+  3030C001AA: {n_steps: 15, image_glob: "3030C001AA/*/step_*.jpg", has_real_fail: false}
+  3030C002AA: {n_steps: 15, image_glob: "3030C002AA/*/step_*.jpg", has_real_fail: false}
+  3030C003AA: {n_steps: 15, image_glob: "3030C003AA/*/step_*.jpg", has_real_fail: false}
+  3030C004AA: {n_steps: 15, image_glob: "3030C004AA/*/step_*.jpg", has_real_fail: false}
+  3031C001AA: {n_steps: 15, image_glob: "3031C001AA/*/step_*.jpg", has_real_fail: false}
+  3031C002AA: {n_steps: 13, image_glob: "3031C002AA/*/step_*.jpg", has_real_fail: false}
+  3031C003AA: {n_steps: 13, image_glob: "3031C003AA/*/step_*.jpg", has_real_fail: false}
+
+eval:
+  metrics: [auroc, aupr, f1, precision, recall]
+  save_score_csv: true
+  save_heatmaps: true

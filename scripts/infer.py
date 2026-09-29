@@ -8,11 +8,15 @@
 """
 from __future__ import annotations
 
+# Windows(이 개발 환경)에서 재현되는 DLL 로드 순서 문제 회피용 — cv2/numpy보다 먼저 import 해야 함
+# (src/pipeline.py 상단 주석 참고). src.data.dataset이 src.pipeline보다 먼저 cv2를 끌어들이므로 필요.
+import torch  # noqa: F401,E402
+
 import argparse
 from pathlib import Path
 
 from src.data.dataset import read_image
-from src.pipeline import load_step_artifacts, score_image
+from src.pipeline import build_backbone_if_needed, load_step_artifacts, score_image
 from src.scoring.decision import FAIL, judge_product, judge_step
 from src.utils.config import get_step_ids, load_config
 from src.utils.io import get_run_dir
@@ -43,12 +47,13 @@ def main() -> None:
     args = parse_args()
     cfg = load_config(args.config)
     run_dir = get_run_dir(cfg["paths"]["results_dir"], args.run)
+    backbone = build_backbone_if_needed(cfg)
 
     if args.image is not None:
         if args.step is None:
             raise SystemExit("--image 사용 시 --step 도 지정해야 합니다.")
         artifacts = load_step_artifacts(run_dir, args.machine, args.step)
-        res = score_image(read_image(args.image), artifacts)
+        res = score_image(read_image(args.image), artifacts, backbone=backbone)
         _print_step_result(args.step, res)
         return
 
@@ -64,7 +69,7 @@ def main() -> None:
         if not img_path.is_file() or not (artifact_dir / "meta.json").is_file():
             continue
         artifacts = load_step_artifacts(run_dir, args.machine, step)
-        res = score_image(read_image(img_path), artifacts)
+        res = score_image(read_image(img_path), artifacts, backbone=backbone)
         step_results[step] = _print_step_result(step, res)
 
     if step_results:
