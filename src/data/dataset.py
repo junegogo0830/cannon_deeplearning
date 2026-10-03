@@ -51,6 +51,11 @@ def get_step_paths(cfg: dict[str, Any], machine_type: str, step: int) -> tuple[l
     ng = load_ng_events(cfg)
     ng_sub = ng[(ng.machine_type == machine_type) & (ng.step == step)]
     fail_paths = [root / row.product_id / "NG" / row.filename for row in ng_sub.itertuples()]
+
+    # NG 사진이 있는 제품은 같은 스텝의 루트 사진도 정상 기준에서 뺀다.
+    # 같은 제품(같은 개체)이 정상 기준(val)과 테스트(FAIL) 양쪽에 들어가면 평가가 부풀려지기 때문.
+    fail_products = {row.product_id for row in ng_sub.itertuples()}
+    pass_paths = [p for p in pass_paths if p.parent.name not in fail_products]
     return pass_paths, fail_paths
 
 

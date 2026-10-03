@@ -1,115 +1,136 @@
-# cannon_deeplearning
+# 산업 이미지 PASS/FAIL 판정 (Canon 화상검사)
 
-이미지 기반 공장 품질검사(PASS/FAIL) 딥러닝 과제 프로젝트.
+핸디형 카메라로 찍은 제품 사진에서 **기종·스텝별 PASS/FAIL**을 판정하는 과제 프로젝트예요. 과제 조건은 FAIL 데이터가 극소이고, GPU 없이 CPU만 쓸 수 있다는 점이에요.
 
-> 현재 상태: **EDA 완료, 모델·판정 로직은 미구현(TODO)**. 실 데이터 기반 데이터 특성 분석 결과는 [reports/eda_summary.md](reports/eda_summary.md)와 [notebooks/01_eda.ipynb](notebooks/01_eda.ipynb) 참고.
+> 상태: 데이터 탐색과 이상탐지 파이프라인은 구현·검증했어요. 라벨 의미와 체크포인트-스텝 대응은 **조교님 확인 대기** 중이에요.
 
-## 1. 문제 정의
+---
 
-- **입력**: 기종별 제품 이미지 (13개 기종, 핸디형 카메라로 촬영)
-- **출력**: 기종별 검사 스텝(13~20개, 기종마다 다름) 각각에 대한 PASS / FAIL (+ 제품 단위 최종 판정)
-- **판정 방식**: 스텝별 이상 스코어를 계산하고 **임계값(threshold)** 과 비교하여 PASS/FAIL 결정
+## 1. 데이터 (실측)
 
-### 제약 조건
+```
+data/raw/<기종코드>/<제품시리얼>/step_N.jpg              # 정상 촬영 사진 (N = 0부터)
+data/raw/<기종코드>/<제품시리얼>/NG/<timestamp>_..._step_N.jpg   # NG 폴더 사진 (12장)
+```
 
-| 항목 | 내용 |
+| 항목 | 값 |
 |---|---|
-| 클래스 불균형 | FAIL 데이터가 극히 적음 → 일반 분류(supervised) 학습이 어려움 |
-| 연산 환경 | GPU 사용 불가, **CPU 전용** → 경량 접근 위주 |
-| 판정 로직 | YOLO / OCR / 템플릿 매칭 등 기성 알고리즘의 결과를 **그대로 판정에 쓰지 않음**. 스코어링·threshold 는 직접 구성 |
+| 전체 파일 | 47,270 (jpg 47,267, 그 외 3) |
+| 기종 | 13개 (`3029C003AA` … `3031C003AA`) |
+| 제품 | 3,214 (구조 이상으로 빠진 2개 포함 시 3,216) |
+| 스텝 수 | 기종마다 다름: 13 / 15 / 18 / 20 (`3029C004AA` 0~17, `3029C010AA` 0~19) |
+| 해상도 | 전부 1024×768, RGB |
+| 디코딩 실패 / 완전 중복 | 0 / 0 |
+| NG | 12장, 9개 제품, 3개 기종(3029C003AA·3029C004AA·3029C009AA) |
 
-## 2. 접근 방향: 이상탐지 (Anomaly Detection)
+- **라벨 CSV는 없어요.** 정상과 NG는 폴더 위치로만 구분돼요.
+- **중첩 폴더 2개**(`2EQ16161/2EQ16160`, `2EQ16974/2EQ16973`, 각 15장)가 제품 폴더 안에 잘못 들어가 있어요. 현재 파이프라인은 이걸 읽지 않아요.
 
-정상(PASS) 이미지만으로 "정상이 어떻게 생겼는지"를 학습하고, 정상에서 벗어난 정도를 **이상 스코어**로 수치화합니다.
+### 확인된 것과 아직 아닌 것
 
-```
-이미지 ─► 전처리(ROI) ─► 특징 추출 ─► 이상탐지 모델(정상만 학습) ─► 이상 스코어
-                                                                        │
-                                       스텝별 threshold (직접 산출) ◄───┤
-                                                                        ▼
-                                               스텝 PASS/FAIL ─► 제품 최종 판정
-```
+| 구분 | 내용 | 상태 |
+|---|---|---|
+| 일람표(`T595NP_층별일람표_2.xlsx`) | 기종별 검사 부품과 체크포인트 ①~⑮ | 원본 확인 |
+| 체크포인트 N ↔ 사진 `step_N` | 3029C003AA의 ①③⑨와 3029C010AA의 ⑪에서 일치 확인 | 기종 일부만 확인 |
+| step_0 | 바코드 명판 (13개 기종 공통, 체크포인트 없음) | 확인 |
+| NG 폴더 = 불량 정답 | 미확정. 파일명 스텝이 사진과 다른 사례가 있음 (예: 2EQ16580 step_9 두 번째 사진 = step_10 내용) | **조교님 확인 필요** |
+| 루트 사진 = 정상 | 가정. 수리·재촬영 여부 미확정 | **조교님 확인 필요** |
+| 일람표의 16~19번 | 항목 없음 | 문서 범위 밖 |
 
-- **학습**: PASS 이미지만 사용. FAIL 은 검증·평가·threshold 보정에만 사용
-- **정렬(registration)**: 핸디형 카메라 특성상 제품마다 이동·회전·배율 편차가 큼(EDA 실측: 이동 최대 ~120px, 회전 최대 ~5°, 배율 ±10%) → affine(4DOF) 정렬 + 이중 게이트(inlier 조건 + 변환값 타당성 bound) 필수. 자세한 근거는 [reports/eda_summary.md](reports/eda_summary.md) §5
-- **모델** (메인): 패치 메모리뱅크 k-NN (PatchCore류, 직접 구현) — 비교용 베이스라인으로 가우시안/마할라노비스, 데이터 많은 기종 한정 실험으로 소형 Conv AutoEncoder
-- **특징**: 수작업 특징(엣지 방향·그래디언트, 채도가중 Hue 등 조명/반사에 강건한 것 위주) 또는 경량 CNN 임베딩 (특징 추출기로만 사용)
-- **Threshold**: 정상 검증 스코어 분포 기반(percentile, mean+k·std) + 소수 FAIL 로 보정 (FAIL 라벨이 있는 기종은 3개뿐, 총 9개 제품 — §3 참고)
-- **평가**: accuracy 대신 AUROC / AUPR / Precision·Recall·F1 (불균형 고려). FAIL 라벨 없는 10개 기종은 합성 결함 주입으로 보완 (정량 검증 불가능함을 명시)
+---
 
-## 3. 폴더 구조
+## 2. 접근
 
-```
-cannon(2)/
-├── configs/            # 실험 설정 (config.yaml: 기종/스텝/정렬/threshold/경로)
-├── data/
-│   ├── raw/            # 원본 이미지, data/raw/<기종>/<제품>/step_N.jpg (git 제외, 용량 큼)
-│   └── processed/
-│       └── eda/        # EDA 결과 CSV (inventory, ng_events, alignment 등 — 용량 작아 git 포함)
-├── src/
-│   ├── data/           # 이미지·라벨 로딩, 전처리, 분할
-│   ├── features/       # 수작업/패치/CNN 임베딩 특징 추출
-│   ├── models/         # 이상탐지 모델 (gaussian, patch_knn, autoencoder)
-│   ├── scoring/        # 스코어 집계·정규화, threshold 산출, PASS/FAIL 판정
-│   ├── eval/           # 지표, 시각화, 리포트
-│   └── utils/          # config / seed / io / logger
-├── scripts/            # 실행 엔트리포인트 (train / evaluate / infer)
-├── notebooks/          # 탐색·EDA 노트북
-├── reports/            # 분석 리포트, 그래프
-├── results/            # 학습 산출물 (모델, threshold, 스코어 CSV) (git 제외)
-├── requirements.txt
-└── README.md
-```
+1. **스텝별 이상탐지 (기본)**: 정상 사진만으로 기종·스텝마다 "평소 모습"을 배우고, 벗어나면 이상으로 봐요.
+2. **부품별 검사 (계획)**: 일람표에 항목이 있고 참고 사진으로 위치를 확인한 부품은, 그 부품 영역만 잘라서 검사해요. (N = step 가정 하에)
+3. 지도학습은 FAIL이 극소라 사용하지 않아요.
 
-## 4. 데이터 형식 (실측, EDA 완료)
+평가는 정상 오판율(FPR)과 실제 NG 검출 여부를 함께 봐요. 12장으로 불량 성능을 단정하지 않아요.
+
+---
+
+## 3. 주요 결과 요약
+
+- **임계값 검증 표본 문제**: 검증 표본이 8~12장이면 임계값이 실제 정상 분포보다 한참 낮게 잡혀요. 검증 표본을 제품 단위로 150장 이상 따로 떼도록 고쳤어요(`min_val`). 이후 FPR이 0.8~2.7%로 안정됐어요.
+- **정렬 정책**: 실패 시 제외하는 방식은 데이터를 최대 55%까지 버리고, 실제 FAIL 검출이 우연에 기댔어요. 원본을 그대로 쓰는 완화 방식이 더 안정적이었어요.
+- **방법 비교 (3029C003AA, step 2·14)**: patch-kNN(AUROC 0.74~0.80) > PaDiM(0.71~0.75) > AutoEncoder(0.25~0.34, 무작위보다 낮음).
+- **한계**: 뚜렷한 결함(라벨 누락)은 잡히지만, 미묘한 결함(이음새 간격, 라벨 문구)은 현재 방법으로 잡히지 않아요. 실제 FAIL 예시가 스텝당 1~2개뿐이라 튜닝과 검증이 어려워요.
+
+---
+
+## 4. 저장소 구조
 
 ```
-data/raw/<기종코드>/<제품 시리얼>/step_N.jpg        # N = 0부터 시작, 기종마다 스텝 수 다름(13/15/18/20)
-data/raw/<기종코드>/<제품 시리얼>/NG/<timestamp>_cell{c}_process{p}_step_{N}.jpg   # 불량이 확인된 스텝 (유일한 FAIL 라벨 소스)
+src/                       # 파이프라인
+  data/                    # 로딩, 정렬, 분할(제품 단위 누수 검사 포함)
+  features/                # 핸드크래프트 특징, 고정 CNN 임베딩
+  models/                  # gaussian, patch_knn, padim, autoencoder
+  scoring/                 # 집계, 정규화, 임계값, PASS/FAIL 판정
+  eval/                    # 지표, 합성 결함, 시각화
+  pipeline.py              # 학습·추론 공통 흐름
+scripts/
+  build_inventory.py       # NG 라벨 목록 생성
+  eda_full.py              # 전수 EDA (구조·무결성·밝기·선명도·NG 대조·정렬 통계)
+  step_audit.py            # 기종×스텝 감사 (contact sheet, 기종 간 유사도)
+  step_compare_table.py    # 기종×스텝 비교표
+  train.py / evaluate.py / infer.py   # 학습·평가·추론 CLI
+  compare_ad_methods.py    # 방법 비교 실험
+configs/
+  config.yaml              # handcrafted 특징 설정
+  config_cnn.yaml          # CNN 임베딩 설정
+reports/
+  eda_summary.md           # 1차 EDA 요약
+  eda_full.md              # 전수 EDA 보고서
+  step_audit.md            # 기종×스텝 감사 (195행)
+  progress_summary.md      # 팀 공유용 진행 요약
+  eda/                     # 예시 이미지, 스텝 카탈로그
+notebooks/01_eda.ipynb     # EDA 노트북
+data/processed/            # 가벼운 결과 CSV (대용량은 .gitignore)
 ```
 
-- 라벨 CSV는 따로 없음. `NG/` 폴더의 존재·파일명이 FAIL 라벨의 전부이며, `scripts/build_inventory.py`가 이를 스캔해 `data/processed/eda/inventory.csv`(전체 목록)와 `ng_events.csv`(FAIL 목록)를 생성함
-- 기종코드(예 `3029C003AA`)는 마케팅 모델명이 아니라 생산 주문(대오더) 코드. 제품 시리얼 앞 3글자가 기종코드와 1:1 대응
-- 해상도는 전수 표본 확인 결과 1024×768로 완전히 동일
-- 전체 3,214개 제품 중 FAIL 라벨이 있는 건 **9개(0.28%)**, 그마저도 13개 기종 중 3개 기종에만 존재
+---
 
-자세한 내용과 근거(정렬 난이도, 조명 변동성, 결함 사례 갤러리 등)는 [reports/eda_summary.md](reports/eda_summary.md) 참고.
-
-## 5. 실행법 (뼈대)
+## 5. 실행
 
 ```bash
-# 1) 환경 설정 (Python 3.10+ 권장)
-python -m venv .venv
-.venv\Scripts\activate            # Windows
-pip install -r requirements.txt   # torch 는 CPU 빌드로 설치됨
+python -m pip install -r requirements.txt
 
-# 2) 데이터 배치
-#    data/raw/ 에 기종별 폴더(예 3029C003AA/2EQ16144/step_0.jpg ...)를 넣는다
-
-# 3) 인벤토리/EDA 재현 (선택 — data/processed/eda/*.csv 는 이미 git에 포함되어 있음)
+# 1) 데이터 목록과 NG 라벨
 python scripts/build_inventory.py
-python scripts/eda_scan.py
 
-# 4) 설정 확인
-#    configs/config.yaml 의 기종/정렬/threshold 확인·조정
+# 2) 전수 EDA (약 4분)
+python scripts/eda_full.py
 
-# 5) 학습 (정상 데이터로 스텝별 모델 + threshold 산출)
-python -m scripts.train --config configs/config.yaml --machine 3029C003AA
+# 3) 기종×스텝 감사
+python scripts/step_audit.py
+python scripts/step_compare_table.py
 
-# 6) 평가
-python -m scripts.evaluate --config configs/config.yaml --machine 3029C003AA --run <run_name>
+# 4) 학습·평가 (예: 3029C003AA의 2, 9, 14번 스텝)
+python -m scripts.train    --config configs/config.yaml     --machine 3029C003AA --steps 2 9 14 --run demo --min-val 150 --max-train 60
+python -m scripts.evaluate --config configs/config.yaml     --machine 3029C003AA --steps 2 9 14 --run demo --n-synthetic 15
 
-# 7) 추론
-python -m scripts.infer --config configs/config.yaml --machine 3029C003AA --run <run_name> --image path/to/img.jpg
+# 5) 방법 비교
+python -m scripts.compare_ad_methods --machine 3029C003AA --steps 2 14
 ```
 
-## 6. TODO / 로드맵
+> Windows에서는 `import torch`를 `cv2`/`numpy`보다 먼저 import해야 DLL 오류가 나지 않아요. 진입 스크립트에 이미 반영돼 있어요.
 
-- [x] EDA — 데이터 구조/불균형/정렬난이도/조명변동/결함 사례 파악 (`reports/eda_summary.md`, `notebooks/01_eda.ipynb`)
-- [x] config 를 실제 13개 기종·스텝 수로 갱신
-- [ ] 데이터 로더·전처리 구현 (`src/data`) — 정렬(affine + 이중 게이트) 포함
-- [ ] 베이스라인: 수작업 특징 + 가우시안 모델
-- [ ] 스코어 정규화 및 threshold 산출 구현 (`src/scoring`)
-- [ ] 평가 지표·시각화 구현 (`src/eval`)
-- [ ] 패치 k-NN / AutoEncoder 로 확장 및 비교
-- [ ] 결과 리포트 작성 (`reports/`)
+결과(`results/`)와 원본 데이터(`data/raw/`)는 저장소에 올리지 않아요.
+
+---
+
+## 6. 열린 질문 (조교님께 확인)
+
+1. NG 폴더의 사진은 **그 스텝의 불량**인가, **제품 전체의 불량**인가?
+2. 체크포인트 N과 사진 파일 `step_N`이 같은 순서인가? (3029C003AA·3029C010AA에서는 같은 것으로 보여요)
+3. 루트 사진은 모두 **정상**인가? 같은 제품의 수리·재촬영 사진이 있는가?
+4. 일람표는 어느 기종을 기준으로 한 것인가? 16~19번 스텝의 검사 기준은 어디서 확인하는가?
+
+---
+
+## 7. 팀
+
+- 팀원 저장소: [chaehwanjung/deeplearing_project](https://github.com/chaehwanjung/deeplearing_project) (데이터 점검, 스텝 분류 기준선, 보고서 틀)
+- 이 저장소는 파이프라인과 EDA를 담당해요.
+- 보고서 제출 기한: 10월 16일 (LMS, PDF).
+- AI 사용: 분석 스크립트, 보고서 초안, 이미지 판독 보조에 AI(Claude)를 사용했어요. 보고서에 사용 범위를 명시해야 해요.

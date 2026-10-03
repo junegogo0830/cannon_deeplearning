@@ -21,7 +21,7 @@ import numpy as np
 
 from src.data.dataset import get_step_paths, read_image
 from src.data.preprocess import align_to_reference, preprocess
-from src.data.split import reserve_val_then_train
+from src.data.split import assert_product_disjoint, reserve_val_then_train
 from src.features.patches import extract_patches, patch_features
 from src.models.base import AnomalyModel, build_model
 from src.scoring.anomaly_score import aggregate_patch_scores, combine_scales
@@ -136,6 +136,7 @@ def train_step(
     val_is_fallback = len(val_paths) == 0
     if val_is_fallback:
         val_paths = train_paths  # 극소 표본 기종: val 없으면 train으로 대체 (신뢰도 낮음, meta에 표시)
+    assert_product_disjoint(train=train_paths, val=val_paths)
 
     reference = preprocess(read_image(train_paths[0]), roi, size)
 

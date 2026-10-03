@@ -60,3 +60,27 @@ def reserve_val_then_train(
     if max_train is not None and len(remaining) > max_train:
         remaining = remaining[:max_train]
     return remaining, val_paths
+
+
+def product_key(path: str | Path) -> str:
+    """이미지가 속한 제품 식별자 '기종/제품시리얼'. NG 폴더 안 사진도 같은 제품으로 본다."""
+    parent = Path(path).parent
+    if parent.name.upper() == "NG":
+        parent = parent.parent
+    return f"{parent.parent.name}/{parent.name}"
+
+
+def assert_product_disjoint(**groups: list) -> None:
+    """서로 다른 분할(train/val/holdout 등)에 같은 제품의 사진이 섞였는지 검사한다.
+
+    같은 제품의 일반·NG·재촬영 사진이 여러 분할에 걸치면 평가가 부풀려진다(누수).
+    현재 스텝별 모델은 제품당 루트 사진이 스텝마다 1장뿐이라 자연스럽게 분리되지만,
+    나중에 스텝을 공유하는 모델을 만들 때를 대비해 검사를 남겨 둔다.
+    """
+    owner: dict[str, str] = {}
+    for name, paths in groups.items():
+        for p in paths:
+            k = product_key(p)
+            if k in owner and owner[k] != name:
+                raise ValueError(f"제품 {k} 가 {owner[k]} 와 {name} 에 동시에 있음 (누수)")
+            owner[k] = name
