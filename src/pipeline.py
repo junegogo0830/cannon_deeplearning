@@ -20,7 +20,7 @@ import cv2
 import numpy as np
 
 from src.data.dataset import get_step_paths, read_image
-from src.data.preprocess import align_to_reference, preprocess
+from src.data.preprocess import align_to_reference, crop_roi, resize_image
 from src.data.split import assert_product_disjoint, reserve_val_then_train
 from src.features.patches import extract_patches, patch_features
 from src.models.base import AnomalyModel, build_model
@@ -84,6 +84,26 @@ def _align_or_fallback(
     return None, diag, False
 
 
+def _prepare_image(
+    raw: np.ndarray, reference_native: np.ndarray, roi: tuple[int, int, int, int] | None,
+    align_cfg: dict[str, Any], size: tuple[int, int],
+) -> tuple[np.ndarray | None, dict[str, Any], bool]:
+    """원본 이미지를 crop(ROI) → 정렬(원본 해상도) → 리사이즈 순서로 처리한다.
+
+    정렬 게이트(max_abs_dx_px 등)는 EDA에서 원본(1024x768) 기준으로 실측한 값이라
+    (reports/eda_summary.md §5), 리사이즈 전에 원본 해상도에서 정렬해야 게이트가 의도대로
+    작동한다. 리사이즈 후 정렬하면 같은 게이트 숫자가 실제보다 훨씬 느슨하게 적용된다.
+
+    Returns:
+        (크기 조정까지 끝난 이미지 또는 None, 정렬 진단, 실제 정렬 적용 여부)
+    """
+    cropped = crop_roi(raw, roi)
+    used_native, diag, was_aligned = _align_or_fallback(cropped, reference_native, align_cfg)
+    if used_native is None:
+        return None, diag, False
+    return resize_image(used_native, size), diag, was_aligned
+
+
 def _normalize_with_stats(arr: np.ndarray, stats: dict[str, Any]) -> np.ndarray:
     if stats["method"] == "minmax":
         return (arr - stats["lo"]) / (stats["hi"] - stats["lo"] + 1e-8)
@@ -138,14 +158,13 @@ def train_step(
         val_paths = train_paths  # 극소 표본 기종: val 없으면 train으로 대체 (신뢰도 낮음, meta에 표시)
     assert_product_disjoint(train=train_paths, val=val_paths)
 
-    reference = preprocess(read_image(train_paths[0]), roi, size)
+    reference_native = crop_roi(read_image(train_paths[0]), roi)  # 정렬은 원본 해상도에서 (게이트가 그 기준)
 
     aligned_train: list[np.ndarray] = []
     n_excluded = 0
     n_used_unaligned = 0
     for p in train_paths:
-        img = preprocess(read_image(p), roi, size)
-        used_img, _diag, was_aligned = _align_or_fallback(img, reference, align_cfg)
+        used_img, _diag, was_aligned = _prepare_image(read_image(p), reference_native, roi, align_cfg, size)
         if used_img is None:
             n_excluded += 1
             continue
@@ -164,16 +183,18 @@ def train_step(
 
     models: dict[int, AnomalyModel] = {}
     for scale in scales:
-        all_feats = np.concatenate(pools_by_scale[scale], axis=0)
+        stacked = np.stack(pools_by_scale[scale], axis=0)  # (N, P, D) — 이미지 경계 보존
         model = build_model(cfg["model"])
-        model.fit(all_feats)
+        # patch_knn 등 뱅크류는 이미지 경계 없이 펼친 (전체패치수, D)를, PaDiM처럼 위치별
+        # 통계가 필요한 모델은 (N, P, D)를 그대로 받는다 (model.expects_patch_grid로 선언).
+        feats = stacked if model.expects_patch_grid else stacked.reshape(-1, stacked.shape[-1])
+        model.fit(feats)
         models[scale] = model
 
     val_scores_by_scale: dict[int, list[float]] = {scale: [] for scale in scales}
     val_used: list[Path] = []
     for p in val_paths:
-        img = preprocess(read_image(p), roi, size)
-        used_img, _diag, _was_aligned = _align_or_fallback(img, reference, align_cfg)
+        used_img, _diag, _was_aligned = _prepare_image(read_image(p), reference_native, roi, align_cfg, size)
         if used_img is None:
             continue
         val_used.append(p)
@@ -194,7 +215,9 @@ def train_step(
     threshold = fit_thresholds({step: {"normal": combined_val}}, cfg["threshold"])[step]
 
     out_dir = step_artifact_dir(run_dir, machine_type, step)
-    cv2.imencode(".jpg", reference)[1].tofile(str(out_dir / "reference.jpg"))
+    # score_image 가 추론 시에도 "원본 해상도에서 정렬"할 수 있도록 native 기준 이미지를 저장한다
+    # (리사이즈된 reference를 쓰면 게이트 픽셀값이 다시 어긋난다 — _prepare_image 설명 참고).
+    cv2.imencode(".jpg", reference_native)[1].tofile(str(out_dir / "reference.jpg"))
     for scale, model in models.items():
         model.save(out_dir / f"model_scale{scale}.pkl")
 
@@ -242,8 +265,7 @@ def score_image(image: np.ndarray, artifacts: dict[str, Any], backbone: Any = No
     size = tuple(meta["image_size"])
     cfg_like = {"features": meta["features_cfg"]}
 
-    img = preprocess(image, roi, size)
-    used_img, diag, was_aligned = _align_or_fallback(img, artifacts["reference"], meta["align_cfg"])
+    used_img, diag, was_aligned = _prepare_image(image, artifacts["reference"], roi, meta["align_cfg"], size)
     if used_img is None:
         return {"ok": False, "reason": diag["reason"], "align_diag": diag, "threshold": meta["threshold"]}
 

@@ -12,9 +12,15 @@ from __future__ import annotations
 
 import numpy as np
 
+from src.models.base import AnomalyModel
 
-class PaDiMModel:
+
+class PaDiMModel(AnomalyModel):
     """패치 그리드 위치별로 (평균, 공분산역행렬)을 저장한다."""
+
+    #: fit()에 이미지 경계를 유지한 (N, P, D)를 그대로 받아야 한다 — "위치 p"가 N장에 걸쳐
+    #: 같은 물리적 부위라는 가정이 이 모델의 핵심이라, patch_knn처럼 패치를 펼치면 안 된다.
+    expects_patch_grid = True
 
     def __init__(self, reg_eps: float = 1e-2) -> None:
         self.reg_eps = reg_eps

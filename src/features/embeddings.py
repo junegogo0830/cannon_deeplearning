@@ -18,16 +18,25 @@ import torch
 _IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 _IMAGENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
-_SUPPORTED = {"mobilenet_v3_small"}
+_SUPPORTED = {"mobilenet_v3_small", "resnet18"}
+
+# ResNet류는 mobilenet처럼 .features 순차 블록이 아니라 layer1~4라는 named module이라
+# 별도 처리가 필요하다. patch_knn/PaDiM 문헌(PatchCore 등)에서 흔히 쓰는 조합인
+# layer2(중간 해상도)·layer3(더 깊은 의미 표현)을 기본으로 쓴다. 정수 "layer 코드"는
+# config의 cnn_layers 숫자와 그대로 맞춘다(1→layer1 … 4→layer4).
+_RESNET_LAYER_NAMES = {1: "layer1", 2: "layer2", 3: "layer3", 4: "layer4"}
 
 
 def build_backbone(name: str = "mobilenet_v3_small") -> torch.nn.Module:
-    """경량 사전학습 CNN을 로드해 eval 모드(CPU)로 반환한다. 파라미터는 전부 freeze."""
+    """사전학습 CNN을 로드해 eval 모드(CPU)로 반환한다. 파라미터는 전부 freeze."""
     if name not in _SUPPORTED:
         raise ValueError(f"지원하지 않는 backbone: {name} (사용 가능: {_SUPPORTED})")
     import torchvision.models as tvm
 
-    model = tvm.mobilenet_v3_small(weights=tvm.MobileNet_V3_Small_Weights.IMAGENET1K_V1)
+    if name == "mobilenet_v3_small":
+        model = tvm.mobilenet_v3_small(weights=tvm.MobileNet_V3_Small_Weights.IMAGENET1K_V1)
+    else:  # resnet18 — mobilenet_v3_small(2.5M 파라미터, 속도 최적화)보다 표현력이 큰 백본
+        model = tvm.resnet18(weights=tvm.ResNet18_Weights.IMAGENET1K_V1)
     model.eval()
     for p in model.parameters():
         p.requires_grad_(False)
@@ -41,25 +50,46 @@ def _to_input_tensor(image: np.ndarray) -> torch.Tensor:
     return torch.from_numpy(rgb).permute(2, 0, 1).unsqueeze(0).float()
 
 
+def _extract_mobilenet(backbone: torch.nn.Module, x: torch.Tensor, layers: list[int]) -> dict[int, torch.Tensor]:
+    """mobilenet_v3_small.features 는 순차적 블록들이라, index가 작을수록 해상도 높은(=세밀한)
+    패치, 클수록 수용영역이 넓은(=거시적) 패치다."""
+    captured: dict[int, torch.Tensor] = {}
+    max_layer = max(layers)
+    h = x
+    for i, block in enumerate(backbone.features):
+        h = block(h)
+        if i in layers:
+            captured[i] = h
+        if i == max_layer:
+            break
+    return captured
+
+
+def _extract_resnet(backbone: torch.nn.Module, x: torch.Tensor, layers: list[int]) -> dict[int, torch.Tensor]:
+    """resnet18은 named module(layer1~4) 구조라 mobilenet과 추출 방식이 다르다."""
+    names = [_RESNET_LAYER_NAMES[layer] for layer in layers]
+    max_depth = max(layers)
+    captured: dict[int, torch.Tensor] = {}
+    h = backbone.maxpool(backbone.relu(backbone.bn1(backbone.conv1(x))))
+    for depth in range(1, max_depth + 1):
+        h = getattr(backbone, _RESNET_LAYER_NAMES[depth])(h)
+        if depth in layers:
+            captured[depth] = h
+    return captured
+
+
 def extract_embeddings(
     backbone: torch.nn.Module, image: np.ndarray, layers: list[int]
 ) -> dict[int, np.ndarray]:
     """이미지 한 장 → 지정한 레이어들의 패치 임베딩 {layer_idx: (P, D)}.
 
-    한 번의 forward pass로 여러 레이어(=스케일)를 동시에 뽑는다. mobilenet_v3_small.features 는
-    순차적 블록들이라, index가 작을수록 해상도 높은(=세밀한) 패치, 클수록 수용영역이 넓은(=거시적) 패치다.
+    한 번의 forward pass로 여러 레이어(=스케일)를 동시에 뽑는다. 백본 구조(mobilenet의 순차
+    블록 vs resnet의 named layer)에 따라 추출 방식만 다르고, 반환 형태는 동일하다.
     """
     x = _to_input_tensor(image)
-    captured: dict[int, torch.Tensor] = {}
-    max_layer = max(layers)
+    is_resnet = hasattr(backbone, "layer1")
     with torch.no_grad():
-        h = x
-        for i, block in enumerate(backbone.features):
-            h = block(h)
-            if i in layers:
-                captured[i] = h
-            if i == max_layer:
-                break
+        captured = _extract_resnet(backbone, x, layers) if is_resnet else _extract_mobilenet(backbone, x, layers)
 
     out: dict[int, np.ndarray] = {}
     for layer, feat in captured.items():

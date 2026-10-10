@@ -26,28 +26,32 @@ alignment:
   method: affine
   feature: orb
   ransac_reproj_threshold: 5.0
-  min_inliers: 15
+  min_inliers: 15        # ORB 특징점 기준. 부족하면 2단계로 ECC(명암 기반)를 자동 재시도함(코드 레벨, src/data/preprocess.py).
   min_inlier_ratio: 0.25
   max_abs_dx_px: 200
   max_abs_dy_px: 150
-  max_abs_rotation_deg: 20
+  max_abs_rotation_deg: 20   # ORB·ECC 어느 쪽으로 구한 변환이든 이 게이트를 공통으로 통과해야 함(완화하지 않음).
   # handcrafted 버전과 유일하게 다른 지점: 정렬 실패해도 제외하지 않고 원본(전처리만 된) 이미지로 진행.
-  # CNN 임베딩이 정렬 없이도 정상/이상을 구분할 만큼 강건한지가 이 실험의 핵심 질문.
   on_failure: keep_unaligned
 
 features:
   type: cnn_embedding
   cnn_backbone: mobilenet_v3_small   # torchvision 사전학습, frozen, ImageNet 가중치
   # mobilenet_v3_small.features 블록 인덱스. 작을수록 해상도 높은(세밀한) 패치, 클수록 수용영역 넓은(거시적) 패치.
-  # index4: (40ch, 24x32=768패치) / index9: (96ch, 12x16=192패치) — 한 번의 forward로 둘 다 추출.
-  cnn_layers: [4, 9]
+  # index4: (40ch, 24x32=768패치). index9도 쓸 수 있지만 아래 model.type=padim은 index4 단일 레이어로만
+  # 실측 검증했다(reports/model_results.md §6) — 두 레이어 concat 조합은 아직 검증 안 함.
+  cnn_layers: [4]
 
 model:
-  type: patch_knn
+  # patch_knn(위치 무관) vs padim(위치별 가우시안). 실측(reports/model_results.md §6, 2개 기종 28개 스텝):
+  #   patch_knn: FPR 1.6%, 실제 NG 검출 1/11(9%)
+  #   padim + ECC보강 정렬(아래 alignment 그대로, 게이트 완화 없음): FPR 1.6%, 검출 2/11(18%) — 같은 FPR에서 검출 2배
+  # → padim을 기본값으로 채택. 단, padim은 위치가 어긋나면(정렬 실패) 바로 약해지므로 정렬 품질에 더 의존적임.
+  type: padim
   params:
     knn_k: 3
     coreset_ratio: 0.1
-    reg_eps: 1.0e-3
+    reg_eps: 1.0e-2
 
 scoring:
   patch_aggregation: max
