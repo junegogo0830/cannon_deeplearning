@@ -53,7 +53,12 @@ def get_roi_crop(raw: np.ndarray, ref_native: np.ndarray, align_cfg: dict) -> np
 def segment_chars(crop: np.ndarray) -> tuple[list[tuple[int, int, int, int]], np.ndarray]:
     gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
     gray = cv2.GaussianBlur(gray, (3, 3), 0)
-    _, bw = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    # 전역 Otsu 대신 지역 적응형 이진화 -> 대각선 그림자(국소 밝기 편차)에 덜 흔들림.
+    bw = cv2.adaptiveThreshold(
+        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 31, 8
+    )
+    # 끊어진 획을 살짝 이어붙임(그림자로 갈라진 글자 보정), 너무 키우면 옆 글자와 붙으므로 최소한만.
+    bw = cv2.morphologyEx(bw, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
     n, _labels, stats, _centroids = cv2.connectedComponentsWithStats(bw, connectivity=8)
     h_img, w_img = gray.shape
     boxes = []
@@ -64,6 +69,13 @@ def segment_chars(crop: np.ndarray) -> tuple[list[tuple[int, int, int, int]], np
         if h < h_img * 0.15 or h > h_img * 0.7:
             continue
         if w > w_img * 0.25:
+            continue
+        # 명판 오른쪽 끝의 회색 인디케이터 박스(문자가 아님, 고정 위치)를 제외.
+        if x > w_img * 0.85:
+            continue
+        # 글자 영역의 평균 밝기(원본 그레이) 확인 - 인디케이터 박스는 글자보다 밝은 회색조임.
+        mean_val = gray[y : y + h, x : x + w].mean()
+        if mean_val > 150:
             continue
         boxes.append((x, y, w, h))
     boxes.sort(key=lambda b: b[0])
