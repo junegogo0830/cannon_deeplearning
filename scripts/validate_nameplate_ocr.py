@@ -23,6 +23,8 @@ from __future__ import annotations
 
 import torch  # noqa: F401,E402  (Windows DLL 순서)
 
+from pathlib import Path
+
 import cv2
 import numpy as np
 import pandas as pd
@@ -31,8 +33,10 @@ from src.data.dataset import get_step_paths, read_image
 from src.data.preprocess import align_to_reference, crop_roi
 from src.data.split import reserve_val_then_train
 from src.utils.config import load_config
+from src.utils.io import save_json
 from src.utils.log import get_logger
 
+ARTIFACT_ROOT = Path("results/text_artifacts")
 MACHINE, STEP = "3029C009AA", 3
 # scripts/product_part_map_wide.py 류의 자동 매칭이 아니라, report.md §3.3.3에서
 # 일람표 참고사진(row26_28.png)을 정상 기준사진에 NCC 매칭 + 육안 확인까지 마친 ROI.
@@ -97,8 +101,39 @@ def ncc(a: np.ndarray, b: np.ndarray) -> float:
     return float((a0 * b0).sum() / denom)
 
 
+def _spacing_is_consistent(boxes: list[tuple[int, int, int, int]], tol: float = 0.35) -> bool:
+    """글자 중심 x좌표 간격이 고르게 일정한지 확인 — 노이즈 조각이 아니라 진짜 글자들임을
+    뒷받침하는 신호(2EX36524처럼 "N" 한 글자만 빠진 경우, 나머지 4글자 간격은 정상과 똑같다)."""
+    if len(boxes) < 2:
+        return False
+    centers = sorted(x + w / 2 for x, _y, w, _h in boxes)
+    gaps = np.diff(centers)
+    if gaps.mean() <= 0:
+        return False
+    return bool((gaps.std() / gaps.mean()) < tol)
+
+
+def classify_nameplate(crop: np.ndarray, ref_chars: list[np.ndarray]) -> dict:
+    """문자 검사 판정. 세 갈래:
+    - 글자수 정확(5개) → 칸별 NCC로 PASS/FAIL(내용 불일치)
+    - 글자수가 기대보다 1개 적고 간격이 고르다 → 노이즈가 아니라 진짜 "문자 누락"으로 보고 FAIL
+      (§3.3.4 추가 조사에서 2EX36524가 바로 이 경우였음 — "2206N"에서 "N"이 빠진 것을
+      기존 로직은 "분할 실패"로 오판해 REVIEW로 놓쳤었다)
+    - 그 외(글자수가 더 적거나, 간격이 불규칙) → REVIEW
+    """
+    boxes, bw = segment_chars(crop)
+    n = len(boxes)
+    if n == N_CHARS_EXPECTED:
+        chars = char_images(bw, boxes)
+        score = min(ncc(c, r) for c, r in zip(chars, ref_chars))
+        return {"n_chars": n, "score": score, "mode": "exact"}
+    if n == N_CHARS_EXPECTED - 1 and _spacing_is_consistent(boxes):
+        return {"n_chars": n, "score": None, "mode": "missing_char"}
+    return {"n_chars": n, "score": None, "mode": "review"}
+
+
 def min_char_ncc(crop: np.ndarray, ref_chars: list[np.ndarray]) -> float | None:
-    """문자 5개가 정확히 분할됐을 때만 값을 반환, 아니면 None(=REVIEW 대상)."""
+    """(구버전 호환용) 문자 5개가 정확히 분할됐을 때만 값을 반환, 아니면 None(=REVIEW 대상)."""
     boxes, bw = segment_chars(crop)
     if len(boxes) != N_CHARS_EXPECTED:
         return None
@@ -133,40 +168,61 @@ def main() -> None:
         raise RuntimeError("train_paths 안에서 문자 5개 분할에 성공한 템플릿을 못 찾았습니다.")
     logger.info(f"문자 템플릿: {ref_source}")
 
-    # 2) 임계값: val_paths에서만 결정 (분할 성공한 것 중 최저 NCC의 하위 1%).
+    # 2) 임계값: val_paths에서만 결정 (글자수 정확한 것 중 최저 NCC의 하위 1%).
+    #    동시에 "missing_char" 모드가 정상 데이터에서도 나오는지(=오탐 위험) 확인한다.
     val_scores = []
     val_review = 0
+    val_missing_char_false_positive = 0
     for p in val_paths:
         crop = get_roi_crop(read_image(p), ref_native, align_cfg)
-        s = min_char_ncc(crop, ref_chars)
-        if s is None:
-            val_review += 1
+        r = classify_nameplate(crop, ref_chars)
+        if r["mode"] == "exact":
+            val_scores.append(r["score"])
+        elif r["mode"] == "missing_char":
+            val_missing_char_false_positive += 1  # 정상인데 "글자 누락"으로 오판 = 오탐
         else:
-            val_scores.append(s)
+            val_review += 1
     val_scores = np.array(val_scores)
     threshold = float(np.percentile(val_scores, 1.0)) if len(val_scores) else float("nan")
     logger.info(
         f"val: 분할성공={len(val_scores)}/{len(val_paths)} "
-        f"(REVIEW {val_review}, {val_review/len(val_paths):.1%}) | "
+        f"(REVIEW {val_review}, {val_review/len(val_paths):.1%} | "
+        f"missing_char 오탐 {val_missing_char_false_positive}건) | "
         f"NCC 분포 min={val_scores.min():.3f} 5%={np.percentile(val_scores,5):.3f} "
         f"50%={np.percentile(val_scores,50):.3f} | 임계값(1%ile)={threshold:.3f}"
     )
 
-    # 3) holdout: 완전히 독립된 정상 집합으로 운영 성능(FPR·REVIEW율) 측정.
-    holdout_scores, holdout_review = [], 0
+    # 실제 추론(scripts/infer_text.py)에서 재사용할 수 있도록 아티팩트를 저장한다.
+    artifact_dir = ARTIFACT_ROOT / MACHINE / f"step_{STEP}"
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    ok, buf = cv2.imencode(".jpg", ref_native)
+    (artifact_dir / "reference.jpg").write_bytes(buf.tobytes())
+    np.save(artifact_dir / "ref_chars.npy", np.stack(ref_chars))
+    save_json({
+        "machine": MACHINE, "step": STEP, "roi": list(ROI), "n_chars_expected": N_CHARS_EXPECTED,
+        "char_size": list(CHAR_SIZE), "threshold": threshold, "align_cfg": align_cfg,
+    }, artifact_dir / "meta.json")
+    logger.info(f"아티팩트 저장 완료 -> {artifact_dir}")
+
+    # 3) holdout: 완전히 독립된 정상 집합으로 운영 성능(FPR·REVIEW율·missing_char 오탐율) 측정.
+    holdout_scores, holdout_review, holdout_missing_fp = [], 0, 0
     for p in holdout_paths:
         crop = get_roi_crop(read_image(p), ref_native, align_cfg)
-        s = min_char_ncc(crop, ref_chars)
-        if s is None:
-            holdout_review += 1
+        r = classify_nameplate(crop, ref_chars)
+        if r["mode"] == "exact":
+            holdout_scores.append(r["score"])
+        elif r["mode"] == "missing_char":
+            holdout_missing_fp += 1
         else:
-            holdout_scores.append(s)
+            holdout_review += 1
     holdout_scores = np.array(holdout_scores)
-    fpr = float((holdout_scores < threshold).mean()) if len(holdout_scores) else float("nan")
+    fpr_exact = float((holdout_scores < threshold).mean()) if len(holdout_scores) else float("nan")
+    fpr_total = (int((holdout_scores < threshold).sum()) + holdout_missing_fp) / len(holdout_paths)
     logger.info(
         f"holdout(독립): 분할성공={len(holdout_scores)}/{len(holdout_paths)} "
-        f"(REVIEW {holdout_review}, {holdout_review/len(holdout_paths):.1%}) | "
-        f"고정임계값 기준 FPR={fpr:.1%}"
+        f"(REVIEW {holdout_review}, {holdout_review/len(holdout_paths):.1%} | "
+        f"missing_char 오탐 {holdout_missing_fp}건, {holdout_missing_fp/len(holdout_paths):.1%}) | "
+        f"고정임계값 기준 FPR(글자대조만)={fpr_exact:.1%} | 전체 FPR(missing_char 포함)={fpr_total:.1%}"
     )
 
     # 4) 실제 NG 3건에 고정 임계값 적용.
@@ -174,25 +230,27 @@ def main() -> None:
     for p in fail_paths:
         name = p.parent.parent.name
         crop = get_roi_crop(read_image(p), ref_native, align_cfg)
-        boxes, bw = segment_chars(crop)
-        if len(boxes) != N_CHARS_EXPECTED:
-            verdict, score = "REVIEW(분할실패 - 별도 ROI-PaDiM 존재검사로 누락 여부 판단)", None
+        r = classify_nameplate(crop, ref_chars)
+        if r["mode"] == "exact":
+            verdict = "FAIL(내용 불일치)" if r["score"] < threshold else "PASS"
+            score = round(r["score"], 3)
+        elif r["mode"] == "missing_char":
+            verdict, score = "FAIL(문자 누락)", None
         else:
-            chars = char_images(bw, boxes)
-            s = min(ncc(c, r) for c, r in zip(chars, ref_chars))
-            verdict = "FAIL(내용 불일치)" if s < threshold else "PASS"
-            score = round(s, 3)
-        rows.append({"product": name, "n_chars": len(boxes), "min_ncc": score, "verdict": verdict})
-        logger.info(f"{name}: 문자수={len(boxes)} min_ncc={score} -> {verdict}")
+            verdict, score = "REVIEW(분할실패 - 별도 ROI-PaDiM 존재검사로 누락 여부 판단)", None
+        rows.append({"product": name, "n_chars": r["n_chars"], "min_ncc": score, "verdict": verdict})
+        logger.info(f"{name}: 문자수={r['n_chars']} min_ncc={score} -> {verdict}")
 
     summary = pd.DataFrame(
         [
             {
                 "val_review_rate": round(val_review / len(val_paths), 3),
+                "val_missing_char_fp_rate": round(val_missing_char_false_positive / len(val_paths), 4),
                 "holdout_split_success_rate": round(len(holdout_scores) / len(holdout_paths), 3),
                 "holdout_review_rate": round(holdout_review / len(holdout_paths), 3),
                 "threshold": round(threshold, 3),
-                "holdout_fpr": round(fpr, 3),
+                "holdout_fpr_exact_only": round(fpr_exact, 4),
+                "holdout_fpr_total_incl_missing_char": round(fpr_total, 4),
             }
         ]
     )
