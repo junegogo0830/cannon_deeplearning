@@ -64,6 +64,56 @@ data/raw/<기종코드>/<제품시리얼>/NG/<timestamp>_..._step_N.jpg   # NG �
 
 ---
 
+## 3-1. 통합 검사 파이프라인 (기종·스텝별 검사 목적 자동 라우팅)
+
+§3까지의 결과는 전부 **범용 PaDiM 하나**로 낸 것이고, 존재검사(A)·내용검사(B)는 각자 다른
+스크립트로 따로 실행해야 했어요. `configs/inspection_rules.yaml`(기종×스텝별 검사 규칙)과
+`src/inspection/`(registry→router→decision)이 이걸 자동으로 연결해요 — 제품 하나를 넣으면
+등록된 전체 스텝을 규칙에 맞는 모듈(A/B/D, C는 미구현 상태 그대로 NOT_APPLICABLE)로 자동
+검사하고 PASS/FAIL/REVIEW를 냅니다.
+
+```bash
+# 규칙 생성(최초 1회, 또는 report.md 내용이 바뀌면 재생성)
+python -m scripts.build_inspection_rules
+
+# 제품 전체 자동 검사
+python -m scripts.infer_product --machine 3029C009AA --product 2EX36613 --include-ng --verbose
+
+# 전체 NG 12장 재검증 + 전용모듈(A/B) 검증된 두 셀의 정상 홀드아웃 FPR 재측정
+python -m scripts.evaluate_integrated
+```
+
+**무엇이 바뀌었는지(실측)**: 범용 PaDiM만 썼을 때 실제 NG 12장 중 검출은 2건뿐이었는데,
+A/B가 검증된 두 셀(3029C003AA step2, 3029C009AA step3)에서 전용 모듈을 우선 적용하도록
+라우팅하자 **같은 12장에서 6건 검출**로 늘었습니다(`results/evaluate_integrated/summary.json`
+재현 가능). 늘어난 4건은 전부 원래부터 A/B가 따로 검증했던 바로 그 사례들이고, 이번에
+새로 생긴 건 "사람이 매번 어떤 스크립트를 쓸지 고르지 않아도 자동으로 맞는 모듈이 걸린다"는
+것입니다 — 검출 능력 자체가 새로 생긴 게 아니라 기존에 따로 놀던 모듈을 정직하게 연결한
+결과입니다. 나머지 180여 (기종,스텝) 셀은 여전히 전용 모듈이 없어 범용 PaDiM만 적용되고,
+`module_validated: false`로 그 사실이 결과에 그대로 남습니다.
+
+**알려진 한계(숨기지 않고 명시)**:
+- C(형상·위치) 모듈은 인터페이스만 있고 실제 판정기가 없어요(시도했지만 검증 실패 — report.md §3.3.5, §3.3.7). 해당 스텝은 항상 `NOT_APPLICABLE`로 보고되고, 범용 PaDiM 점수로 C를 "통과했다"고 주장하지 않아요.
+- A와 B가 같은 스텝에 모두 걸리면(예: 009AA step3), 둘 다 각자 `align_to_reference`를 따로 호출합니다 — 서로 다른 기준사진(reference.jpg)을 쓰기 때문에 정렬 결과를 안전하게 공유할 방법이 없어서 중복 정렬이 그대로 남아 있어요(속도 손해는 작지만 정직하게 기록).
+- 3030C002AA(제품 2개)는 `results/all13_kfold/`의 out-of-fold 아티팩트로 "실행은 가능"하지만, OOF 점수가 2개뿐이라 FPR 수치 자체는 통계적으로 거의 의미가 없어요(report.md §3.9).
+- 모듈 A/B는 자체 학습에 쓴 이미지 목록을 아티팩트에 저장해 두지 않아서, `evaluate_integrated.py`가 재는 A/B 홀드아웃 FPR은 "D 기준 독립 홀드아웃"일 뿐 A/B 자신의 학습 데이터와 100% 안 겹친다는 보장은 없어요 — A/B 자체의 독립 holdout 수치는 `validate_presence_roi.py`/`validate_nameplate_ocr.py` 실행 당시 기록(report.md §3.3.3/§3.3.4, A 약 1%, B 0%/209장)이 더 신뢰도 높습니다.
+
+```
+configs/inspection_rules.yaml    # 기종×스텝 검사 규칙(scripts/build_inspection_rules.py로 생성)
+src/inspection/
+  registry.py                    # 규칙 조회
+  artifacts.py                   # 모델/백본 캐시(중복 디스크 로딩 방지)
+  adapters.py                    # 기존 D/A/B 추론을 공통 결과 스키마로 래핑
+  router.py                      # 규칙 보고 A/B/C/D 중 무엇을 실행할지 결정
+  decision.py                    # 모듈 결과 → 스텝/제품 최종 PASS/FAIL/REVIEW
+scripts/
+  build_inspection_rules.py      # 규칙 YAML 생성기
+  infer_product.py               # 제품 전체 통합 검사 CLI (JSON/CSV 저장, --verbose)
+  evaluate_integrated.py         # NG 12장 전수 재검증 + 정상 홀드아웃 FPR
+```
+
+---
+
 ## 4. 저장소 구조
 
 ```
