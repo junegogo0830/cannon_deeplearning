@@ -1,0 +1,2436 @@
+# 자동 생성 파일 — scripts/build_inspection_rules.py 로 재생성한다. 직접 손으로 고치지 말 것.
+# mapping_verified: 체크포인트 번호와 step_N 대응 자체가 검증됐는가 (§1.2 참고 — 2개 기종만 일부 검증)
+# module_validated: 전용 모듈(A/B)의 판정이 실제 NG 사례로 검증됐는가
+# status_note: 위 두 플래그로부터 자동 계산한 요약(항상 최신 플래그와 일치)
+# detail: 셀별로 수기 작성한 추가 설명(선택, status_note를 대체하지 않음)
+# module_validated=False인 셀은 전부 범용 PaDiM(D)만 적용하고, 그 사실을 판정 결과에 그대로 남긴다.
+
+machines:
+  3029C003AA:
+    run_dir: all13
+    n_steps: 15
+    has_real_fail: true
+    steps:
+      0:
+        checkpoint: null
+        part_name: 바코드 명판(체크포인트 없음)
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: true
+        modules:
+        - D
+        module_validated: false
+        status_note: 체크포인트 매핑은 확인됐으나 전용 모듈 미검증 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C003AA/step_0
+      1:
+        checkpoint: ①
+        part_name: C551 토너라벨
+        reference_image: data/processed/xlsx_refs/row11_05.jpg
+        inspection_types:
+        - content
+        mapping_verified: true
+        modules:
+        - D
+        module_validated: false
+        status_note: 체크포인트 매핑은 확인됐으나 전용 모듈 미검증 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C003AA/step_1
+      2:
+        checkpoint: ②
+        part_name: B793 Canon각인
+        reference_image: data/processed/xlsx_refs/row34_30.png
+        inspection_types:
+        - existence
+        mapping_verified: true
+        modules:
+        - A
+        module_validated: true
+        model_artifact_a: results/presence_artifacts/3029C003AA/step_2
+        validated_cases:
+        - 2EQ17039(Canon 각인 누락, 검출 성공)
+        status_note: 전용 모듈(A) 판정이 실제 NG 사례로 검증됨
+        model_artifact_generic: results/all13/3029C003AA/step_2
+      3:
+        checkpoint: ③
+        part_name: 6416 2206N명판
+        reference_image: data/processed/xlsx_refs/row26_28.png
+        inspection_types:
+        - existence
+        - content
+        mapping_verified: true
+        modules:
+        - D
+        module_validated: false
+        detail: 체크포인트는 확인됐으나 이 기종(003AA) step3에는 실제 NG가 없어 모듈 검증은 못 했다 (009AA step3에서
+          검증, 아래 참고)
+        status_note: 체크포인트 매핑은 확인됐으나 전용 모듈 미검증 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C003AA/step_3
+      4:
+        checkpoint: ④
+        part_name: 3102 현상가압라벨 / 3699 레버피스
+        reference_image: data/processed/xlsx_refs/row13_14.jpg / data/processed/xlsx_refs/row20_17.jpg
+        inspection_types:
+        - existence
+        mapping_verified: true
+        modules:
+        - D
+        module_validated: false
+        status_note: 체크포인트 매핑은 확인됐으나 전용 모듈 미검증 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C003AA/step_4
+      5:
+        checkpoint: ⑤
+        part_name: 1525 라벨
+        reference_image: data/processed/xlsx_refs/row12_06.jpg
+        inspection_types:
+        - existence
+        mapping_verified: true
+        modules:
+        - D
+        module_validated: false
+        status_note: 체크포인트 매핑은 확인됐으나 전용 모듈 미검증 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C003AA/step_5
+      6:
+        checkpoint: ⑥
+        part_name: 2917 코마
+        reference_image: data/processed/xlsx_refs/row21_16.jpg
+        inspection_types:
+        - shape_position
+        mapping_verified: true
+        modules:
+        - D
+        module_validated: false
+        detail: C(형상·위치) 대상 — PaDiM·엣지밀도 둘 다 시도, 실패(report.md §3.3.5, §3.3.7). ROI는
+          정상 12장 중 10장에서 검증됐으나 신호 자체가 없음(원인 불명으로 남김).
+        status_note: 체크포인트 매핑은 확인됐으나 전용 모듈 미검증 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C003AA/step_6
+      7:
+        checkpoint: ⑦
+        part_name: 1525 라벨(2번째 검사)
+        reference_image: data/processed/xlsx_refs/row12_07.jpg
+        inspection_types:
+        - existence
+        mapping_verified: true
+        modules:
+        - D
+        module_validated: false
+        detail: 실제 NG 1건(2EQ17023)은 장면 자체가 다른 사진으로 판단돼(§3.2.5) 비교 대상에서 제외했다.
+        status_note: 체크포인트 매핑은 확인됐으나 전용 모듈 미검증 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C003AA/step_7
+      8:
+        checkpoint: ⑧
+        part_name: 0000 모듈러카바
+        reference_image: data/processed/xlsx_refs/row36_31.jpg
+        inspection_types:
+        - existence
+        mapping_verified: true
+        modules:
+        - D
+        module_validated: false
+        status_note: 체크포인트 매핑은 확인됐으나 전용 모듈 미검증 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C003AA/step_8
+      9:
+        checkpoint: ⑨
+        part_name: 3780 전원스위치
+        reference_image: data/processed/xlsx_refs/row24_21.jpg
+        inspection_types:
+        - existence
+        mapping_verified: true
+        modules:
+        - D
+        module_validated: true
+        detail: 전용 모듈(A/B) 없이 범용 PaDiM(D)만으로 실제 NG 2/2 검출 성공(report.md §3.2.1). 검증된
+          범용 판정 사례로 별도 표시.
+        status_note: 전용 모듈 없음 — 범용 PaDiM(D)이 실제 NG 사례로 검증된 예외적 경우
+        model_artifact_generic: results/all13/3029C003AA/step_9
+      10:
+        checkpoint: ⑩
+        part_name: V242 카바라이트
+        reference_image: data/processed/xlsx_refs/row18_12.jpg
+        inspection_types:
+        - existence
+        mapping_verified: true
+        modules:
+        - D
+        module_validated: false
+        status_note: 체크포인트 매핑은 확인됐으나 전용 모듈 미검증 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C003AA/step_10
+      11:
+        checkpoint: ⑪
+        part_name: V242 카바라이트(2번째)
+        reference_image: data/processed/xlsx_refs/row18_12.jpg
+        inspection_types:
+        - existence
+        mapping_verified: true
+        modules:
+        - D
+        module_validated: false
+        status_note: 체크포인트 매핑은 확인됐으나 전용 모듈 미검증 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C003AA/step_11
+      12:
+        checkpoint: ⑫
+        part_name: 3779 압판스토퍼
+        reference_image: data/processed/xlsx_refs/row23_19.jpg
+        inspection_types:
+        - existence
+        mapping_verified: true
+        modules:
+        - D
+        module_validated: false
+        status_note: 체크포인트 매핑은 확인됐으나 전용 모듈 미검증 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C003AA/step_12
+      13:
+        checkpoint: null
+        part_name: 일람표 대응 불명
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C003AA/step_13
+      14:
+        checkpoint: ⑭
+        part_name: 3779 압판스토퍼(2번째 검사)
+        reference_image: data/processed/xlsx_refs/row23_18.jpg
+        inspection_types:
+        - shape_position
+        mapping_verified: true
+        modules:
+        - D
+        module_validated: false
+        detail: C(형상·위치) 대상 — 촬영 자세 변화로 ROI 자체가 불안정(report.md §3.3.2, §3.3.7). 자세
+          군집화도 각도 측정 도구 불안정으로 착수 단계에서 중단.
+        status_note: 체크포인트 매핑은 확인됐으나 전용 모듈 미검증 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C003AA/step_14
+  3029C004AA:
+    run_dir: all13_kfold
+    n_steps: 18
+    has_real_fail: true
+    steps:
+      0:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_0
+      1:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_1
+      2:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_2
+      3:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_3
+      4:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_4
+      5:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_5
+      6:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_6
+      7:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_7
+      8:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_8
+      9:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_9
+      10:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_10
+      11:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_11
+      12:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_12
+      13:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_13
+      14:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_14
+      15:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_15
+      16:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_16
+      17:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C004AA/step_17
+  3029C005AA:
+    run_dir: all13_kfold
+    n_steps: 13
+    has_real_fail: false
+    steps:
+      0:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C005AA/step_0
+      1:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C005AA/step_1
+      2:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C005AA/step_2
+      3:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C005AA/step_3
+      4:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C005AA/step_4
+      5:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C005AA/step_5
+      6:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C005AA/step_6
+      7:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C005AA/step_7
+      8:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C005AA/step_8
+      9:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C005AA/step_9
+      10:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C005AA/step_10
+      11:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C005AA/step_11
+      12:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C005AA/step_12
+  3029C006AA:
+    run_dir: all13_kfold
+    n_steps: 13
+    has_real_fail: false
+    steps:
+      0:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C006AA/step_0
+      1:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C006AA/step_1
+      2:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C006AA/step_2
+      3:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C006AA/step_3
+      4:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C006AA/step_4
+      5:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C006AA/step_5
+      6:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C006AA/step_6
+      7:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C006AA/step_7
+      8:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C006AA/step_8
+      9:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C006AA/step_9
+      10:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C006AA/step_10
+      11:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C006AA/step_11
+      12:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C006AA/step_12
+  3029C009AA:
+    run_dir: all13
+    n_steps: 15
+    has_real_fail: true
+    steps:
+      0:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C009AA/step_0
+      1:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C009AA/step_1
+      2:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C009AA/step_2
+      3:
+        checkpoint: null
+        part_name: 2206N 계열 명판(추정, 003AA ③과 유사)
+        reference_image: null
+        inspection_types:
+        - existence
+        - content
+        mapping_verified: false
+        modules:
+        - A
+        - B
+        module_validated: true
+        model_artifact_a: results/presence_artifacts/3029C009AA/step_3
+        model_artifact_b: results/text_artifacts/3029C009AA/step_3
+        expected_text: 2206N
+        validated_cases:
+        - 2EX36613(명판 누락, A로 검출)
+        - 2EX36661(2206N→2006N 오부착, B로 검출)
+        - 2EX36524(N 탈락, B의 문자누락 규칙으로 검출)
+        status_note: 전용 모듈(A+B) 판정이 실제 NG 사례로 검증됨
+        model_artifact_generic: results/all13/3029C009AA/step_3
+      4:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C009AA/step_4
+      5:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C009AA/step_5
+      6:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C009AA/step_6
+      7:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C009AA/step_7
+      8:
+        checkpoint: null
+        part_name: 불명
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        detail: 실제 NG 1건(2EX36527) 존재하나 육안으로도 식별 불가, 미검출(report.md §3.2.2)
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C009AA/step_8
+      9:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C009AA/step_9
+      10:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C009AA/step_10
+      11:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C009AA/step_11
+      12:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C009AA/step_12
+      13:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C009AA/step_13
+      14:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3029C009AA/step_14
+  3029C010AA:
+    run_dir: all13_kfold
+    n_steps: 20
+    has_real_fail: false
+    steps:
+      0:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_0
+      1:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_1
+      2:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_2
+      3:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_3
+      4:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_4
+      5:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_5
+      6:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_6
+      7:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_7
+      8:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_8
+      9:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_9
+      10:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_10
+      11:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_11
+      12:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_12
+      13:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_13
+      14:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_14
+      15:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_15
+      16:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_16
+      17:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_17
+      18:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_18
+      19:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3029C010AA/step_19
+  3030C001AA:
+    run_dir: all13
+    n_steps: 15
+    has_real_fail: false
+    steps:
+      0:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C001AA/step_0
+      1:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C001AA/step_1
+      2:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C001AA/step_2
+      3:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C001AA/step_3
+      4:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C001AA/step_4
+      5:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C001AA/step_5
+      6:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C001AA/step_6
+      7:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C001AA/step_7
+      8:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C001AA/step_8
+      9:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C001AA/step_9
+      10:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C001AA/step_10
+      11:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C001AA/step_11
+      12:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C001AA/step_12
+      13:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C001AA/step_13
+      14:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C001AA/step_14
+  3030C002AA:
+    run_dir: all13_kfold
+    n_steps: 15
+    has_real_fail: false
+    steps:
+      0:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C002AA/step_0
+      1:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C002AA/step_1
+      2:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C002AA/step_2
+      3:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C002AA/step_3
+      4:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C002AA/step_4
+      5:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C002AA/step_5
+      6:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C002AA/step_6
+      7:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C002AA/step_7
+      8:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C002AA/step_8
+      9:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C002AA/step_9
+      10:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C002AA/step_10
+      11:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C002AA/step_11
+      12:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C002AA/step_12
+      13:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C002AA/step_13
+      14:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C002AA/step_14
+  3030C003AA:
+    run_dir: all13
+    n_steps: 15
+    has_real_fail: false
+    steps:
+      0:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C003AA/step_0
+      1:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C003AA/step_1
+      2:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C003AA/step_2
+      3:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C003AA/step_3
+      4:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C003AA/step_4
+      5:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C003AA/step_5
+      6:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C003AA/step_6
+      7:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C003AA/step_7
+      8:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C003AA/step_8
+      9:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C003AA/step_9
+      10:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C003AA/step_10
+      11:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C003AA/step_11
+      12:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C003AA/step_12
+      13:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C003AA/step_13
+      14:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3030C003AA/step_14
+  3030C004AA:
+    run_dir: all13_kfold
+    n_steps: 15
+    has_real_fail: false
+    steps:
+      0:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C004AA/step_0
+      1:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C004AA/step_1
+      2:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C004AA/step_2
+      3:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C004AA/step_3
+      4:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C004AA/step_4
+      5:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C004AA/step_5
+      6:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C004AA/step_6
+      7:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C004AA/step_7
+      8:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C004AA/step_8
+      9:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C004AA/step_9
+      10:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C004AA/step_10
+      11:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C004AA/step_11
+      12:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C004AA/step_12
+      13:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C004AA/step_13
+      14:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3030C004AA/step_14
+  3031C001AA:
+    run_dir: all13_kfold
+    n_steps: 15
+    has_real_fail: false
+    steps:
+      0:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3031C001AA/step_0
+      1:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3031C001AA/step_1
+      2:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3031C001AA/step_2
+      3:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3031C001AA/step_3
+      4:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3031C001AA/step_4
+      5:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3031C001AA/step_5
+      6:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3031C001AA/step_6
+      7:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3031C001AA/step_7
+      8:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3031C001AA/step_8
+      9:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3031C001AA/step_9
+      10:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3031C001AA/step_10
+      11:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3031C001AA/step_11
+      12:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3031C001AA/step_12
+      13:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3031C001AA/step_13
+      14:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13_kfold/3031C001AA/step_14
+  3031C002AA:
+    run_dir: all13
+    n_steps: 13
+    has_real_fail: false
+    steps:
+      0:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C002AA/step_0
+      1:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C002AA/step_1
+      2:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C002AA/step_2
+      3:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C002AA/step_3
+      4:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C002AA/step_4
+      5:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C002AA/step_5
+      6:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C002AA/step_6
+      7:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C002AA/step_7
+      8:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C002AA/step_8
+      9:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C002AA/step_9
+      10:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C002AA/step_10
+      11:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C002AA/step_11
+      12:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C002AA/step_12
+  3031C003AA:
+    run_dir: all13
+    n_steps: 13
+    has_real_fail: false
+    steps:
+      0:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C003AA/step_0
+      1:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C003AA/step_1
+      2:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C003AA/step_2
+      3:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C003AA/step_3
+      4:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C003AA/step_4
+      5:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C003AA/step_5
+      6:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C003AA/step_6
+      7:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C003AA/step_7
+      8:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C003AA/step_8
+      9:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C003AA/step_9
+      10:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C003AA/step_10
+      11:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C003AA/step_11
+      12:
+        checkpoint: null
+        part_name: null
+        reference_image: null
+        inspection_types:
+        - generic
+        mapping_verified: false
+        modules:
+        - D
+        module_validated: false
+        status_note: 일람표 체크포인트 대응 미검증, 전용 모듈 없음 — 범용 PaDiM(D)만 적용
+        model_artifact_generic: results/all13/3031C003AA/step_12
